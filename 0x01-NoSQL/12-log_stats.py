@@ -1,39 +1,37 @@
 #!/usr/bin/env python3
 """
-Provide some stats about Nginx logs stored in MongoDB
-Database: logs, Collection: nginx, Display same as example
-first line: x logs, x number of documents in this collection
-second line: Methods
-5 lines with method = ["GET", "POST", "PUT", "PATCH", "DELETE"]
-one line with method=GET, path=/status
+This project module contains a Python script that provides
+some stats about Nginx logs stored in MongoDB.
 """
+
 from pymongo import MongoClient
 
 
-METHODS = ["GET", "POST", "PUT", "PATCH", "DELETE"]
-
-
-def log_stats(mongo_collection, option=None):
+def stats_logs() -> None:
     """
-    Prototype: def log_stats(mongo_collection, option=None):
-    Provide some stats about Nginx logs stored in MongoDB
+    Function that provides some stats about Nginx logs
+    stored in MongoDB.
+    Returns:
+        Stats about Nginx logs.
     """
-    items = {}
-    if option:
-        value = mongo_collection.count_documents(
-            {"method": {"$regex": option}})
-        print(f"\tmethod {option}: {value}")
-        return
-
-    result = mongo_collection.count_documents(items)
-    print(f"{result} logs")
+    methods = ["GET", "POST", "PUT", "PATCH", "DELETE"]
+    myclient = MongoClient("mongodb://localhost:27017/")
+    my_database = myclient["logs"]
+    nginx = my_database["nginx"]
+    print("{} logs".format(nginx.count_documents({})))
     print("Methods:")
-    for method in METHODS:
-        log_stats(nginx_collection, method)
-    status_check = mongo_collection.count_documents({"path": "/status"})
-    print(f"{status_check} status check")
+
+    for method in methods:
+        print(
+            "\tmethod {}: {}".format(
+                method, nginx.count_documents({"method": method}))
+        )
+
+    print(
+        "{} status check".format(
+            nginx.count_documents({"method": "GET", "path": "/status"}))
+    )
 
 
 if __name__ == "__main__":
-    nginx_collection = MongoClient('mongodb://127.0.0.1:27017').logs.nginx
-    log_stats(nginx_collection)
+    stats_logs()
